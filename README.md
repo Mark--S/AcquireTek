@@ -1,5 +1,5 @@
 ## AcquireTek
-Code to acquire data from a tektronix MSO2000 scope. 
+Code to acquire data from a tektronix DPO/MSO 2000 or 3000 scope. 
 
 ### Pre requisits
  - python > 2.5
