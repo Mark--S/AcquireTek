@@ -71,7 +71,7 @@ class PickleFile(File):
         full_data = { "meta" : self._meta_data,
                       "data" : self._data }
         with open(file_path, "wb") as file_:
-            pickle.dump(full_data, file_)
+            pickle.dump(full_data, file_, protocol=2)
     def _load(self, file_path):
         """ Load the data from a pickle file."""
         with open(file_path, "rb") as file_:
