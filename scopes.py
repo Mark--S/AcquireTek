@@ -35,7 +35,7 @@ class Tektronix(object):
         self._preamble = {}
         self._channels = {} 
         self._connection = connection
-        self._connection.send_sync("*rst") # Reset the scope
+        #self._connection.send_sync("*rst") # Reset the scope
         self._connection.send_sync("lock none") # Unlock the front panel
         self._connection.send_sync("*cls") # Clear the scope
         self._connection.send_sync("verbose 1") # If the headers are on ensure they are verbose
@@ -75,12 +75,12 @@ class Tektronix(object):
         if self._locked is False:
             print "Not locked"
             raise
-        time.sleep(10) # Prudent to wait for the scope to recover from the settings...
+        time.sleep(5) # Prudent to wait for the scope to recover from the settings...
         self._find_active_channels()
         for channel in self._channels.keys():
             if self._channels[channel]:
                 self._get_preamble(channel)
-        self._connection.send_sync("message:show 'Taking Data, scope is locked.'")
+        #self._connection.send_sync("message:show 'Taking Data, scope is locked.'")
         self._connection.send_sync("message:state on")
     def unlock(self):
         """ Unlock and allow changes."""
@@ -90,11 +90,12 @@ class Tektronix(object):
     def get_preamble(self, channel):
         return self._preamble[channel]
 #### General Settings ###############################################################################
-    def set_display_x(self, scale, pos=0):
+    def set_display_x(self, scale, pos=0, offset=0):
         """ The scope x display settings, these do not affect the waveform.
         scale in seconds per div and pos in percentage of screen."""
         self._connection.send_sync("horizontal:scale %e" % scale)
         self._connection.send_sync("horizontal:position %i" % pos)
+        self._connection.send_sync("horizontal:offset %e" % pos)
     def set_display_y(self, channel, mult, pos=0.0, offset=0.0):
         """ The channel y display settings, these do not affect the waveform.
         mult or volts per div, yoffset (in volts) and position in divs."""
@@ -191,6 +192,15 @@ class Tektronix(object):
                 elif not self._triggered:
                     break
                 # Otherwise carry on
+    def acquire_time_check(self, triggered=True):
+        """ Wait until scope has an acquisition and optionally has triggered."""
+        self._connection.send("acquire:state run") # Equivalent to on
+        # Wait until acquiring and there is a trigger
+        time_start = time.time()
+        while int(self._connection.ask("acquire:state?")) == 0 or (triggered and self._connection.ask("trigger:state?") != "TRIGGER"):
+            if (time.time() - time_start) > 0.25:
+                return False
+        return True
     def get_waveform(self, channel):
         """ Acquire a waveform from channel=channel."""
         if self._locked == False or self._channels[channel] == False:
