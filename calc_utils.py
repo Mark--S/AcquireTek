@@ -15,9 +15,7 @@ import time
 import sys
 import os
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-import array
 
 def readPickleChannel(file, channel_no, correct_offset=True):
     """Read data set as stored in pickle file"""
