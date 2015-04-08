@@ -6,6 +6,7 @@
 # This code choses the commands to send
 #
 # Author P G Jones - 28/05/2013 <p.g.jones@qmul.ac.uk> : First revision
+#        Ed Leming - 7/04/2015 <e.leming09@googlemail.com>: Adding some further functions
 #################################################################################################### 
 import re
 import numpy
