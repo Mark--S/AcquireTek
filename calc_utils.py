@@ -169,13 +169,39 @@ def calcJitter(x1, y1, x2, y2):
         times[i] = time_1 - time_2
     return np.mean(times), np.std(times), np.std(times)/np.sqrt(2*len(y1[:,0]))
 
+def dictionary_of_params(x,y):
+    """Calculate standard parameters and print to screen"""
+    dict = {}
+    dict["area"], dict["area error"] = calcArea(x,y)
+    dict["rise"], dict["rise error"] = calcRise(x,y)
+    dict["fall"], dict["fall error"] = calcFall(x,y)
+    dict["width"], dict["width error"] = calcWidth(x,y)
+    dict["peak"], dict["peak error"] = calcPeak(x,y)
+    return dict
+
+def printParamsDict(dict, name):
+    """Calculate standard parameters and print to screen"""
+    area, areaStd =dict["area"], dict["area error"]
+    rise, riseStd =dict["rise"], dict["rise error"]
+    fall, fallStd =dict["fall"], dict["fall error"]
+    width, widthStd= dict["width"], dict["width error"]
+    peak, peakStd =dict["peak"], dict["peak error"]
+
+    print "%s:" % name
+    print "--------"
+    print "Area \t\t= %1.2e +/- %1.2e Vs" % (area, areaStd)
+    print "Fall time \t= %1.2f +/- %1.2f ns" % (fall*1e9, fallStd*1e9)
+    print "Rise time \t= %1.2f +/- %1.2f ns" % (rise*1e9, riseStd*1e9)
+    print "Width \t\t= %1.2f +/- %1.2f ns" % (width*1e9, widthStd*1e9)
+    print "Peak \t\t= %1.2f +/- %1.2f V" % (peak, peakStd)
+
 def printParams(x,y, name):
     """Calculate standard parameters and print to screen"""
     area, areaStd = calcArea(x,y)
     rise, riseStd = calcRise(x,y)
     fall, fallStd = calcFall(x,y)
     width, widthStd = calcWidth(x,y)
-    mini, miniStd = calcPeak(x,y)
+    peak, peakStd = calcPeak(x,y)
 
     print "\n%s:" % name
     print "--------"
@@ -183,7 +209,7 @@ def printParams(x,y, name):
     print "Fall time \t= %1.2f +/- %1.2f ns" % (fall*1e9, fallStd*1e9)
     print "Rise time \t= %1.2f +/- %1.2f ns" % (rise*1e9, riseStd*1e9)
     print "Width \t\t= %1.2f +/- %1.2f ns" % (width*1e9, widthStd*1e9)
-    print "Peak \t\t= %1.2f +/- %1.2f V" % (mini, miniStd)
+    print "Peak \t\t= %1.2f +/- %1.2f V" % (peak, peakStd)
 
 def plot_eg_pulses(x,y,n,title=None,fname=None,show=False):
     """Plot example pulses""" 

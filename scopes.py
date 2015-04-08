@@ -36,7 +36,7 @@ class Tektronix(object):
         self._preamble = {}
         self._channels = {} 
         self._connection = connection
-        #self._connection.send_sync("*rst") # Reset the scope
+        self._connection.send_sync("*rst") # Reset the scope
         self._connection.send_sync("lock none") # Unlock the front panel
         self._connection.send_sync("*cls") # Clear the scope
         self._connection.send_sync("verbose 1") # If the headers are on ensure they are verbose
@@ -90,13 +90,7 @@ class Tektronix(object):
         self._connection.send_sync("lock none") # Allow the front panel to be used
     def get_preamble(self, channel):
         return self._preamble[channel]
-#### General Settings ###############################################################################
-    def set_display_x(self, scale, pos=0, offset=0):
-        """ The scope x display settings, these do not affect the waveform.
-        scale in seconds per div and pos in percentage of screen."""
-        self._connection.send_sync("horizontal:scale %e" % scale)
-        self._connection.send_sync("horizontal:position %i" % pos)
-        self._connection.send_sync("horizontal:offset %e" % pos)
+#### Display Settings ###############################################################################
     def set_display_y(self, channel, mult, pos=0.0, offset=0.0):
         """ The channel y display settings, these do not affect the waveform.
         mult or volts per div, yoffset (in volts) and position in divs."""
@@ -104,6 +98,11 @@ class Tektronix(object):
         self._connection.send_sync("ch%i:position %e" %(channel, pos))
         self._connection.send_sync("ch%i:offset %e" %(channel, offset))
 #### Waveform Settings ##############################################################################
+    def set_record_length(self, length):
+        self._connection.send_sync("horizontal:recordlength %e" % (length))
+    def get_record_length(self):
+        rtn_str = self._connection.send_sync("horizontal:recordlength?")
+        return [int(s) for s in str.split() if s.isdigit()][0]
     def set_data_mode(self, data_start=1, data_stop=None):
         """ Set the settings for the data returned by the scope."""
         self._connection.send_sync("wfmoutpre:pt_fmt y") # Single point format
@@ -120,15 +119,29 @@ class Tektronix(object):
         self._connection.send_sync("cursor:vbars:position2 %e" % high)
 #### Horizontal Settings ############################################################################
     def set_horizontal_scale(self, scale):
+        """ Sets the timebase horizontal scale in seconds per div."""
         self._connection.send_sync("horizontal:scale %e" % scale)
+    def set_horizontal_delay(self, delay):
+        """Sets the horizontal delay time (position) that is used
+        when delay is on (the default mode)."""
+        self._connection.send_sync("horizontal:delay:mode on") #for clarity
+        self._connection.send_sync("horizontal:delay:time %e" % (delay))
+    def set_sample_rate(self, rate):
+        """Sets the digitizer sample rate"""
+        self._connection.send_sync("horizontal:samplerate %e" % (rate))
 #### Channel Settings ###############################################################################
-    def set_channel_y(self, channel, scale):
+    def set_channel_y(self, channel, scale, pos=0.0, offset=0.0):
         self._connection.send_sync("ch%i:scale %e" % (channel, scale))
+        self._connection.send_sync("ch%i:position %e" %(channel, pos))
+        self._connection.send_sync("ch%i:offset %e" %(channel, offset))
     def set_active_channel(self, channel, active=True):
         if active:
             self._connection.send_sync("select:ch%i on" % channel)
         else:
             self._connection.send_sync("select:ch%i off" % channel)
+    def set_channel_termination(self, channel, resistance):
+        """Set the channel terminaltion, options are 50, 75 or 1e6 ohms"""
+        self._connection.send_sync("ch%i:termination %e" % (channel, resistance))
     def set_invert_channel(self, channel, invert=True):
         """ Invert the channel."""
         if invert:
