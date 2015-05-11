@@ -24,21 +24,22 @@ def waveform_to_hist(timeform, waveform, data_units, title="hist"):
     histogram.GetYaxis().SetTitle(data_units[1])
     return histogram
 
-def plot_area(x, y, name):
+def plot_area(x, y, name, scale = 1e9):
     """Calc area of pulses"""
     area, areaErr = calc.calcArea(x,y)
-    bins = np.arange((area-8*areaErr)*1e9, (area+8*areaErr)*1e9, (areaErr/5)*1e9)
+    bins = np.arange((area-8*areaErr)*scale, (area+8*areaErr)*scale, (areaErr/5)*scale)
     hist = ROOT.TH1D("%s" % name,"%s" % name, len(bins), bins[0], bins[-1])
     hist.SetTitle("Pulse integral")
     hist.GetXaxis().SetTitle("Integrated area (V.ns)")
     for i in range(len(y[:,0])-1):
-        hist.Fill(np.trapz(y[i,:],x)*1e9)
+        hist.Fill(np.trapz(y[i,:],x)*scale)
     return hist, area, areaErr
 
-def plot_rise(x, y, name):
+def plot_rise(x, y, name, scale = 1e9):
     """Calc and plot rise time of pulses"""
     rise, riseErr = calc.calcRise(x,y)
-    bins = np.arange((rise-8*riseErr)*1e9, (rise+8*riseErr)*1e9, (riseErr/5.)*1e9)
+    print rise, riseErr
+    bins = np.arange((rise-8*riseErr)*scale, (rise+8*riseErr)*scale, (riseErr/5.)*scale)
     hist = ROOT.TH1D("%s" % name,"%s" % name, len(bins), bins[0], bins[-1])
     hist.SetTitle("Rise time")
     hist.GetXaxis().SetTitle("Rise time (ns)")
@@ -50,7 +51,7 @@ def plot_rise(x, y, name):
             hi_thresh = m*0.9
             low = calc.interpolate_threshold(x, y[i,:], lo_thresh)
             high = calc.interpolate_threshold(x, y[i,:], hi_thresh)
-            hist.Fill((high - low)*1e9)
+            hist.Fill((high - low)*scale)
     else:
         for i in range(len(y[:,0])-1):
             m = min(y[i,:])
@@ -58,13 +59,14 @@ def plot_rise(x, y, name):
             hi_thresh = m*0.9
             low = calc.interpolate_threshold(x, y[i,:], lo_thresh, rise=False)
             high = calc.interpolate_threshold(x, y[i,:], hi_thresh, rise=False)
-            hist.Fill((high - low)*1e9)
+            hist.Fill((high - low)*scale)
     return hist, rise, riseErr
 
-def plot_fall(x, y, name):
+def plot_fall(x, y, name, scale = 1e9):
     """Calc and plot fall time of pulses"""
     fall, fallErr = calc.calcFall(x,y)
-    bins = np.arange((fall-8*fallErr)*1e9, (fall+8*fallErr)*1e9, (fallErr/5.)*1e9)
+    print fall, fallErr 
+    bins = np.arange((fall-8*fallErr)*scale, (fall+8*fallErr)*scale, (fallErr/5.)*scale)
     hist = ROOT.TH1D("%s" % name,"%s" % name, len(bins), bins[0], bins[-1])
     hist.SetTitle("Fall time")
     hist.GetXaxis().SetTitle("Fall time (ns)")
@@ -75,19 +77,46 @@ def plot_fall(x, y, name):
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = calc.interpolate_threshold(x, y[i,m_index:], lo_thresh, rise=False)
-            high = calc.interpolate_threshold(x, y[i,m_index:], hi_thresh, rise=False)
-            hist.Fill((low - high)*1e9)
+            low = calc.interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh, rise=False)
+            high = calc.interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh, rise=False)
+            hist.Fill((low - high)*scale)
     else:
         for i in range(len(y[:,0])-1):
             m = min(y[i,:])
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = calc.interpolate_threshold(x, y[i,m_index:], lo_thresh)
-            high = calc.interpolate_threshold(x, y[i,m_index:], hi_thresh)
-            hist.Fill((low - high)*1e9)
+            low = calc.interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh)
+            high = calc.interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh)
+            hist.Fill((low - high)*scale)
     return hist, fall, fallErr
+
+def plot_width(x, y, name, scale = 1e9):
+    """Calc and plot FWHM of pulses"""
+    width, widthErr = calc.calcWidth(x,y)
+    print width, widthErr
+    bins = np.arange((width-8*widthErr)*scale, (width+8*widthErr)*scale, (widthErr/5.)*scale)
+    hist = ROOT.TH1D("%s" % name,"%s" % name, len(bins), bins[0], bins[-1])
+    hist.SetTitle("Pulse width")
+    hist.GetXaxis().SetTitle("FWHM (ns)")
+    f = calc.positive_check(y)
+    if f == True:
+        for i in range(len(y[:,0])-1):
+            m = max(y[i,:])
+            m_index = np.where(y[i,:] == m)[0][0]
+            thresh = m*0.5
+            first = calc.interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=True)
+            second = calc.interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=False)
+            hist.Fill((second - first)*scale)
+    else:
+        for i in range(len(y[:,0])-1):
+            m = min(y[i,:])
+            m_index = np.where(y[i,:] == m)[0][0]
+            thresh = m*0.5
+            first = calc.interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=False)
+            second = calc.interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=True)
+            hist.Fill((second - first)*scale)
+    return hist, width, widthErr
 
 def plot_peak(x, y, name):
     """Plot pulse heights for array of pulses"""
@@ -105,10 +134,10 @@ def plot_peak(x, y, name):
             hist.Fill(min(y[i,:]))
     return hist, peak, peakErr
 
-def plot_jitter(x1, y1, x2, y2, name):
+def plot_jitter(x1, y1, x2, y2, name, scale = 1e9):
     """Calc and plot jitter of pulse pairs"""
     sep, jitter, jittErr = calc.calcJitter(x1, y1, x2, y2)
-    bins = np.arange((sep-8*jitter)*1e9, (sep+8*jitter)*1e9, (jitter/5.)*1e9)
+    bins = np.arange((sep-8*jitter)*scale, (sep+8*jitter)*scale, (jitter/5.)*scale)
     hist = ROOT.TH1D("%s" % name,"%s" % name, len(bins), bins[0], bins[-1])
     hist.SetTitle("Jitter between signal and trigger out")
     hist.GetXaxis().SetTitle("Pulse separation (ns)")
@@ -119,7 +148,7 @@ def plot_jitter(x1, y1, x2, y2, name):
         m2 = calc.calcSinglePeak(p2, y2[i,:])
         time_1 = calc.interpolate_threshold(x1, y1[i,:], 0.1*m1, rise=p1)
         time_2 = calc.interpolate_threshold(x2, y2[i,:], 0.1*m2, rise=p2)
-        hist.Fill((time_1 - time_2)*1e9)
+        hist.Fill((time_1 - time_2)*scale)
     return hist, jitter, jittErr
 
 def fit_gauss(hist):
@@ -138,7 +167,8 @@ def fit_gauss(hist):
 def print_hist(hist, savename, c):
     """Function to print histogram to png"""
     c.Clear()
-    hist.Draw("")
+    hist.Draw()
+    ROOT.gPad.Update()
     c.Update()
     stats = c.GetPrimitive("stats")
     stats.SetTextSize(0.04)

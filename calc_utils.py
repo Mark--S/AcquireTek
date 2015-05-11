@@ -48,12 +48,14 @@ def positive_check(y):
     else:
         return False
 
-def calcArea(x,y):
-    """Calc area of pulses"""
-    trapz = np.zeros( len(y[:,0]) )
-    for i in range(len(y[:,0])):
-        trapz[i] = np.trapz(y[i,:],x)
-    return np.mean(trapz), np.std(trapz)
+def rms(alist):
+    '''Calc rms of 1d array'''
+    if len(alist) > 1:
+        listsum = sum((i - np.mean(alist))**2 for i in alist)
+        return np.sqrt(listsum/(len(alist) - 1.0))
+    else:
+       logging.warning("More than one item needed to calculate RMS, thus returning 0")
+       return 0.
 
 def interpolate_threshold(x, y, thresh, rise=True, start=0):
     """Calculate the threshold crossing using a linear interpolation"""
@@ -62,9 +64,17 @@ def interpolate_threshold(x, y, thresh, rise=True, start=0):
     else:
         index_high = np.where( y < thresh )[0][start]
     index_low = index_high - 1
-    dydx = (y[index_high] - y[index_low])/(x[1]-x[0])
-    c = -dydx * x[index_low]
-    return ((thresh - c) / dydx)
+    dydx = (y[index_high] - y[index_low])/(x[index_high]-x[index_low])
+    time = x[index_low] + (thresh - y[index_low]) / dydx
+    #print "x0 = %1.1f\t(thresh - y0) = %1.1f\tdydx = %1.3f\ttime = %1.1f\tdx = %1.1f" % (x[index_low], (thresh - y[index_low]), dydx, time, (x[index_high] - x[index_low])) 
+    return time
+
+def calcArea(x,y):
+    """Calc area of pulses"""
+    trapz = np.zeros( len(y[:,0]) )
+    for i in range(len(y[:,0])):
+        trapz[i] = np.trapz(y[i,:],x)
+    return np.mean(trapz), rms(trapz)
 
 def calcRise(x,y):
     """Calc rise time of pulses"""
@@ -78,7 +88,7 @@ def calcRise(x,y):
             low = interpolate_threshold(x, y[i,:], lo_thresh)
             high = interpolate_threshold(x, y[i,:], hi_thresh)
             rise[i] = high - low
-        return np.mean(rise), np.std(rise)
+        return np.mean(rise), rms(rise)
     else: 
         for i in range(len(y[:,0])):
             m = min(y[i,:])
@@ -87,7 +97,7 @@ def calcRise(x,y):
             low = interpolate_threshold(x, y[i,:], lo_thresh, rise=False)
             high = interpolate_threshold(x, y[i,:], hi_thresh, rise=False)
             rise[i] = high - low
-        return np.mean(rise), np.std(rise)
+        return np.mean(rise), rms(rise) 
 
 def calcFall(x,y):
     """Calc fall time of pulses"""
@@ -99,20 +109,20 @@ def calcFall(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = interpolate_threshold(x, y[i,m_index:], lo_thresh, rise=False)
-            high = interpolate_threshold(x, y[i,m_index:], hi_thresh, rise=False)
+            low = interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh, rise=False)
+            high = interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh, rise=False)
             fall[i] = low - high
-        return np.mean(fall), np.std(fall)
+        return np.mean(fall), rms(fall)
     else:
         for i in range(len(y[:,0])):
             m = min(y[i,:])
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = interpolate_threshold(x, y[i,m_index:], lo_thresh)
-            high = interpolate_threshold(x, y[i,m_index:], hi_thresh)
+            low = interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh)
+            high = interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh)
             fall[i] = low - high
-        return np.mean(fall), np.std(fall)
+        return np.mean(fall), rms(fall)
         
 def calcWidth(x,y):
     """Calc width of pulses"""
@@ -121,19 +131,21 @@ def calcWidth(x,y):
     if f == True:
         for i in range(len(y[:,0])):
             m = max(y[i,:])
+            m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
-            index_1 = interpolate_threshold(x, y[i,:], thresh)
-            index_2 = interpolate_threshold(x, y[i,:], thresh, start=-1)
-            width[i] = index_2 - index_1
-        return np.mean(width), np.std(width)
+            first = interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=True)
+            second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=False)
+            width[i] = second - first
+        return np.mean(width), rms(width)
     else:
         for i in range(len(y[:,0])):
             m = min(y[i,:])
+            m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
-            index_1 = interpolate_threshold(x, y[i,:], thresh, rise=False)
-            index_2 = interpolate_threshold(x, y[i,:], thresh, rise=False, start=-1)
-            width[i] = index_2 - index_1
-        return np.mean(width), np.std(width)
+            first = interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=False)
+            second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=True)
+            width[i] = second - first
+        return np.mean(width), rms(width)
 
 def calcPeak(x,y):
     """Calc min amplitude of pulses"""
@@ -142,11 +154,11 @@ def calcPeak(x,y):
     if f == True:
         for i in range(len(y[:,0])):
             peak[i] = max(y[i,:])
-        return np.mean(peak), np.std(peak)
+        return np.mean(peak), rms(peak)
     else:
         for i in range(len(y[:,0])):
             peak[i] = min(y[i,:])
-        return np.mean(peak), np.std(peak)
+        return np.mean(peak), rms(peak)
 
 def calcSinglePeak(pos_check, y_arr):
     """Calculate peak values for single trace inputs can be positive or negative."""
@@ -211,11 +223,11 @@ def printParams(x,y, name):
     print "Width \t\t= %1.2f +/- %1.2f ns" % (width*1e9, widthStd*1e9)
     print "Peak \t\t= %1.2f +/- %1.2f V" % (peak, peakStd)
 
-def plot_eg_pulses(x,y,n,title=None,fname=None,show=False):
+def plot_eg_pulses(x,y,n,scale=1e9,title=None,fname=None,show=False):
     """Plot example pulses""" 
     plt.figure()
     for i in range(n):
-        plt.plot(x*1e9,y[i,:])
+        plt.plot(x*scale,y[i,:])
     if title == None:
         plt.title( "Example pulses")
     else:
