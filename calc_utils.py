@@ -109,8 +109,8 @@ def calcFall(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh, rise=False)
-            high = interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh, rise=False)
+            low = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], lo_thresh, rise=False)
+            high = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], hi_thresh, rise=False)
             fall[i] = low - high
         return np.mean(fall), rms(fall)
     else:
@@ -119,8 +119,8 @@ def calcFall(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh)
-            high = interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh)
+            low = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], lo_thresh)
+            high = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], hi_thresh)
             fall[i] = low - high
         return np.mean(fall), rms(fall)
         
@@ -134,7 +134,7 @@ def calcWidth(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
             first = interpolate_threshold(x[:m_index+1], y[i,:m_index+1], thresh, rise=True)
-            second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=False)
+            second = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], thresh, rise=False)
             width[i] = second - first
         return np.mean(width), rms(width)
     else:
@@ -143,7 +143,7 @@ def calcWidth(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
             first = interpolate_threshold(x[:m_index+1], y[i,:m_index+1], thresh, rise=False)
-            second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=True)
+            second = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], thresh, rise=True)
             width[i] = second - first
         return np.mean(width), rms(width)
 
