@@ -81,7 +81,8 @@ class Tektronix(object):
         for channel in self._channels.keys():
             if self._channels[channel]:
                 self._get_preamble(channel)
-        #self._connection.send_sync("message:show 'Taking Data, scope is locked.'")
+        self._connection.send_sync("message:show 'Taking Data, scope is locked.'")
+        self._connection.send_sync("message:box 650 100")
         self._connection.send_sync("message:state on")
     def unlock(self):
         """ Unlock and allow changes."""
@@ -208,13 +209,13 @@ class Tektronix(object):
                 elif not self._triggered:
                     break
                 # Otherwise carry on
-    def acquire_time_check(self, triggered=True, timeout=0.3):
+    def acquire_time_check(self, timeout=0.3):
         """ Wait until scope has an acquisition and optionally has triggered."""
         self._connection.send("acquire:state run") # Equivalent to on
         # Wait until acquiring and there is a trigger
         time_start = time.time()
-        while int(self._connection.ask("acquire:state?")) == 0 or (triggered and self._connection.ask("trigger:state?") != "TRIGGER"):
-            #print self._connection.ask("trigger:state?"), time.time() - time_start
+        while int(self._connection.ask("acquire:state?")) == 0 or (self._connection.ask("trigger:state?") != "TRIGGER"):
+            #print self._connection.ask("acquire:state?"), self._connection.ask("trigger:state?"), time.time() - time_start
             if (time.time() - time_start) > timeout:
                 return False
             time.sleep(0.05)
