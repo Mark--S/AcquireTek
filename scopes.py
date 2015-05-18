@@ -82,8 +82,8 @@ class Tektronix(object):
             if self._channels[channel]:
                 self._get_preamble(channel)
         self._connection.send_sync("message:show 'Taking Data, scope is locked.'")
-        self._connection.send_sync("message:box 650 100")
         self._connection.send_sync("message:state on")
+        self._connection.send_sync("message:box 650 100")
     def unlock(self):
         """ Unlock and allow changes."""
         self._locked = False

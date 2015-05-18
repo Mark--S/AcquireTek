@@ -239,3 +239,4 @@ def plot_eg_pulses(x,y,n,scale=1e9,title=None,fname=None,show=False):
     if show == True:
         plt.show()
     plt.clf()
+    plt.close()
