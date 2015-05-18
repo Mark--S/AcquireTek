@@ -43,7 +43,7 @@ def readPickleChannel(file, channel_no, correct_offset=True):
     return x,y
 
 def positive_check(y):
-    if np.mean(y[1,:]) > 0:
+    if np.abs(max(y[1,:])) > np.abs(min(y[1,:])):
         return True
     else:
         return False
@@ -133,7 +133,7 @@ def calcWidth(x,y):
             m = max(y[i,:])
             m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
-            first = interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=True)
+            first = interpolate_threshold(x[:m_index+1], y[i,:m_index+1], thresh, rise=True)
             second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=False)
             width[i] = second - first
         return np.mean(width), rms(width)
@@ -142,7 +142,7 @@ def calcWidth(x,y):
             m = min(y[i,:])
             m_index = np.where(y[i,:] == m)[0][0]
             thresh = m*0.5
-            first = interpolate_threshold(x[:m_index], y[i,:m_index], thresh, rise=False)
+            first = interpolate_threshold(x[:m_index+1], y[i,:m_index+1], thresh, rise=False)
             second = interpolate_threshold(x[m_index:], y[i,m_index:], thresh, rise=True)
             width[i] = second - first
         return np.mean(width), rms(width)

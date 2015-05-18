@@ -101,8 +101,10 @@ class Tektronix(object):
     def set_record_length(self, length):
         self._connection.send_sync("horizontal:recordlength %e" % (length))
     def get_record_length(self):
-        rtn_str = self._connection.send_sync("horizontal:recordlength?")
-        return [int(s) for s in str.split() if s.isdigit()][0]
+        #rtn_str = self._connection.send_sync("horizontal:recordlength?") #3000 model
+        rtn_str = self._connection.send_sync("wfmoutpre:recordlength?") #2000 model 
+        print rtn_str
+        return [int(s) for s in rtn_str.split() if s.isdigit()][0]
     def set_data_mode(self, data_start=1, data_stop=None):
         """ Set the settings for the data returned by the scope."""
         self._connection.send_sync("wfmoutpre:pt_fmt y") # Single point format
@@ -206,14 +208,16 @@ class Tektronix(object):
                 elif not self._triggered:
                     break
                 # Otherwise carry on
-    def acquire_time_check(self, triggered=True):
+    def acquire_time_check(self, triggered=True, timeout=0.3):
         """ Wait until scope has an acquisition and optionally has triggered."""
         self._connection.send("acquire:state run") # Equivalent to on
         # Wait until acquiring and there is a trigger
         time_start = time.time()
         while int(self._connection.ask("acquire:state?")) == 0 or (triggered and self._connection.ask("trigger:state?") != "TRIGGER"):
-            if (time.time() - time_start) > 0.25:
+            #print self._connection.ask("trigger:state?"), time.time() - time_start
+            if (time.time() - time_start) > timeout:
                 return False
+            time.sleep(0.05)
         return True
     def get_waveform(self, channel):
         """ Acquire a waveform from channel=channel."""

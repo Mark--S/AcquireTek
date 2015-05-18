@@ -80,10 +80,10 @@ class PickleFile(File):
         self._data = full_data["data"]
 
 #### h5py ########################################################################################## 
-try:
-    import h5py
-except ImportError:
-    pass # No hdf5 files for you!
+#try:
+#    import h5py
+#except ImportError:
+#    pass # No hdf5 files for you!
 
 class HDF5File(File):
     """ A hdf5 file."""
