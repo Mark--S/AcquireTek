@@ -193,11 +193,11 @@ def dictionary_of_params(x,y):
 
 def printParamsDict(dict, name):
     """Calculate standard parameters and print to screen"""
-    area, areaStd =dict["area"], dict["area error"]
-    rise, riseStd =dict["rise"], dict["rise error"]
-    fall, fallStd =dict["fall"], dict["fall error"]
-    width, widthStd= dict["width"], dict["width error"]
-    peak, peakStd =dict["peak"], dict["peak error"]
+    area, areaStd = dict["area"], dict["area error"]
+    rise, riseStd = dict["rise"], dict["rise error"]
+    fall, fallStd = dict["fall"], dict["fall error"]
+    width, widthStd = dict["width"], dict["width error"]
+    peak, peakStd = dict["peak"], dict["peak error"]
 
     print "%s:" % name
     print "--------"

@@ -222,13 +222,15 @@ class Tektronix(object):
         return True
     def get_waveform(self, channel):
         """ Acquire a waveform from channel=channel."""
-        if self._locked == False or self._channels[channel] == False:
-            raise Exception("Not locked or channel not active.")
+        #if self._locked == False or self._channels[channel] == False:
+        #    raise Exception("Not locked or channel not active.")
         self._connection.send("data:source ch%i" % channel) # Set the data source to the channel
-        data = self._connection.ask("curve?") # Ask for the data
-        if data is None:
+        data, count = None, 0
+        while data == None:
             self._connection.ask("*opc?") # Wait until scope is ready
-            raise Exception("Scope has errored.")
+            data = self._connection.ask("curve?")
+            if count > 5:
+                raise Exception("Scope has errored.")
         header_len = 2 + int(data[1])
         waveform = numpy.fromstring(data[header_len:], self._get_data_type(channel))
         # Now convert the waveform into voltage units
@@ -263,8 +265,10 @@ class Tektronix(object):
         """ Retrieve the preamble from the scope."""
         self._connection.send_sync("data:source ch%i" % channel) # Set the data source to the channel
         self._connection.send_sync("header on") # Turn headers on
-        preamble = {}
-        for preamble_setting in self._connection.ask("wfmoutpre?").strip()[len("wfmoutpre:") + 1:].split(';'): # Ask for waveform information
+        preamble, pr = {}, None
+        while pr == None:
+            pr = self._connection.ask("wfmoutpre?")
+        for preamble_setting in pr.strip()[len("wfmoutpre:") + 1:].split(';'): # Ask for waveform information
             key, value = preamble_setting.split(' ',1)
             if key in Tektronix._preamble_fields.keys():
                 preamble[key] = Tektronix._preamble_fields[key](value) # Conver the value to the correct field type 
