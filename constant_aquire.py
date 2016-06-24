@@ -13,28 +13,38 @@ def save_scopeTraces(fileName, scope, channel):
     results.add_meta_data("timeform_1", scope.get_timeform(channel))
 
     t_start, loopStart = time.time(),time.time()
-    while(time.time()-t_start < 300): # Run for 5 mins
+    i = 0
+    print "Waiting for triggers...."
+    while(time.time()-t_start < 30): # Run for 5 mins
         try:
             results.add_data(scope.get_waveform(channel), 1)
+        except KeyboardInterrupt:
+            print "Keyboard interupt!"
+            results.save()
+            results.close()
+            return
         except Exception, e:
-            print "Scope died, acquisition lost."
             print e
             results.save()
             results.close()
+            return
+        i = i + 1
         if i % 100 == 0 and i > 0:
             print "%d traces collected" % (i)
             loopStart = time.time()
-    print "%d traces collected TOTAL - took : %1.1f s"a % (i, (time.time()-t_start))
+    print "%d traces collected TOTAL - took : %1.1f s" % (i, (time.time()-t_start))
     results.save()
     results.close()
-    return True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", dest="channel", type=int, 
+    parser.add_argument("-c", dest="channel", 
+                        type=int, 
                         default=1,
                         help="Scope channel to acquire / trigger from")
-    parser.add_argument("-t", dest="trigger", type=float,
+    parser.add_argument("-t", dest="trigger",
+                        type=float,
+                        default=-0.02, #-20mV
                         help="Trigger level (if positive / negative will trigger off rising / falling edge")
     parser.add_argument("-n", dest="name", type=str,
                         default="test",
@@ -42,8 +52,10 @@ if __name__ == "__main__":
     args = parser.parse_args()    
     
     ##########################################
+    print "Finding USB connection..."
     usb_conn = scope_connections.VisaUSB()
-    scope = scopes.Tektronix3000(usb_conn)    
+    print "Setting up scope..."
+    scope = scopes.Tektronix3000(usb_conn)
     ##########################################
     scope_chan = args.channel # Set channel to be the one passed
     if args.trigger < 0:
@@ -72,3 +84,5 @@ if __name__ == "__main__":
     scope.set_edge_trigger(trigger, scope_chan, falling=falling_edge)
     scope.lock()
     scope.begin() # Acquires the pre-amble! 
+
+    save_scopeTraces(args.name, scope, scope_chan)
