@@ -25,21 +25,22 @@ def readPickleChannel(file, channel_no, correct_offset=True):
     ### READ Pickle File ###
     wave = utils.PickleFile(file, 4)
     wave.load()
-    xRaw = wave.get_meta_data("timeform_%i" % channel_no)
+    xRaw = wave.get_meta_data("timeform_1")
     yRaw = wave.get_data(channel_no)
     # Correct for trigger offset in timestamps
-    x = xRaw - xRaw[0]
+    length = len(xRaw) - 5 # Sometimes scope gets nPoints in y wrong
+    x = xRaw[:length] - xRaw[0]
     # Count how many pulses saved the file
     count = 0
     for i in yRaw:
         count = count + 1
     ### Make 2D array of pulse y values ###
-    y = np.zeros( (count, len(xRaw)) )
+    y = np.zeros( (count,  length) )
     for i, ent in enumerate(yRaw):
         if correct_offset == True:
-            y[i, :] = ent  - np.mean(ent[0:20])
+            y[i,:] = ent[:length]  - np.mean(ent[0:20])
         else:
-            y[i, :] = ent  
+            y[i,:] = ent[length]
     return x,y
 
 def positive_check(y):
