@@ -161,6 +161,19 @@ def calcPeak(x,y):
             peak[i] = min(y[i,:])
         return np.mean(peak), rms(peak)
 
+def calcSNR(x,y,nSamples=50):
+    """Calc the signal-to-noise ratio of a set of pulses"""
+    snr = np.zeros(len(y[:,0]))
+    f = positive_check(y)
+    if f == True:
+        for i in range(len(y[:,0])):
+            snr[i] = np.max(y[i,:]) / rms(y[i,:nSamples])
+        return np.mean(snr)
+    else:
+        for i in range(len(y[:,0])):
+            snr[i] = np.abs( np.min(y[i,:]) / rms(y[i,:nSamples]) )
+        return np.mean(snr)
+
 def calcSinglePeak(pos_check, y_arr):
     """Calculate peak values for single trace inputs can be positive or negative."""
     if pos_check == True:
