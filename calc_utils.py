@@ -120,8 +120,8 @@ def calcFall(x,y):
             m_index = np.where(y[i,:] == m)[0][0]
             lo_thresh = m*0.1
             hi_thresh = m*0.9
-            low = interpolate_threshold(x[m_index:], y[i,m_index:], lo_thresh)
-            high = interpolate_threshold(x[m_index:], y[i,m_index:], hi_thresh)
+            low = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], lo_thresh)
+            high = interpolate_threshold(x[m_index-1:], y[i,m_index-1:], hi_thresh)
             fall[i] = low - high
         return np.mean(fall), rms(fall)
         
@@ -167,7 +167,7 @@ def calcSNR(x,y,nSamples=50):
     f = positive_check(y)
     if f == True:
         for i in range(len(y[:,0])):
-            snr[i] = np.max(y[i,:]) / rms(y[i,:nSamples])
+            snr[i] = np.max(y[i,:]) / rms(y[i,:nSamples]) 
         return np.mean(snr)
     else:
         for i in range(len(y[:,0])):
@@ -182,7 +182,7 @@ def calcSinglePeak(pos_check, y_arr):
         m = min(y_arr)
     return m
 
-def calcJitter(x1, y1, x2, y2):
+def calcJitter(x1, y1, x2, y2, threshold=0.1):
     """Calc jitter between trig and signal using CFD"""
     p1 = positive_check(y1)
     p2 = positive_check(y2)
@@ -190,8 +190,8 @@ def calcJitter(x1, y1, x2, y2):
     for i in range(len(y1[:,0])):
         m1 = calcSinglePeak(p1, y1[i,:])
         m2 = calcSinglePeak(p2, y2[i,:])
-        time_1 = interpolate_threshold(x1, y1[i,:], 0.1*m1, rise=p1)
-        time_2 = interpolate_threshold(x2, y2[i,:], 0.1*m2, rise=p2)
+        time_1 = interpolate_threshold(x1, y1[i,:], threshold*m1, rise=p1)
+        time_2 = interpolate_threshold(x2, y2[i,:], threshold*m2, rise=p2)
         times[i] = time_1 - time_2
     return np.mean(times), np.std(times), np.std(times)/np.sqrt(2*len(y1[:,0]))
 
@@ -207,11 +207,11 @@ def dictionary_of_params(x,y):
 
 def printParamsDict(dict, name):
     """Calculate standard parameters and print to screen"""
-    area, areaStd = dict["area"], dict["area error"]
-    rise, riseStd = dict["rise"], dict["rise error"]
-    fall, fallStd = dict["fall"], dict["fall error"]
-    width, widthStd = dict["width"], dict["width error"]
-    peak, peakStd = dict["peak"], dict["peak error"]
+    area, areaStd =dict["area"], dict["area error"]
+    rise, riseStd =dict["rise"], dict["rise error"]
+    fall, fallStd =dict["fall"], dict["fall error"]
+    width, widthStd= dict["width"], dict["width error"]
+    peak, peakStd =dict["peak"], dict["peak error"]
 
     print "%s:" % name
     print "--------"
