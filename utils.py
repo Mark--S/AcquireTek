@@ -18,7 +18,7 @@ class File(object):
         print "Using file", file_path + extension
         self._extension = extension
         self._data = {} # Dict by channel or list of waveforms
-        for channel in range(1, channels + 1):
+        for channel in channels:
             self._data[channel] = []
         self._meta_data = {} # Meta data dict
     def add_meta_dict(self, dict, prefix=""):

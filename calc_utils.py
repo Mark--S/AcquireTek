@@ -17,16 +17,22 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-def readPickleChannel(file, channel_no, correct_offset=True):
+def readPickleChannel(file, channel_no, active_channels,correct_offset=True):
     """Read data set as stored in pickle file"""
     # Make sure file path is correct format
     if file[-4:] == ".pkl":
         file = file[0:-4]
     ### READ Pickle File ###
-    wave = utils.PickleFile(file, 4)
+    wave = utils.PickleFile(file, active_channels)
     wave.load()
     xRaw = wave.get_meta_data("timeform_1")
     yRaw = wave.get_data(channel_no)
+    #plt.figure(channel_no)
+    #print len(xRaw)
+    #print len(np.mean(yRaw,0))
+    #plt.plot(xRaw,np.mean(yRaw,0))
+    #plt.title("xRaw vs yRaw for channel: "+str(channel_no))
+    #plt.show()
     # Correct for trigger offset in timestamps
     length = len(xRaw) - 5 # Sometimes scope gets nPoints in y wrong
     x = xRaw[:length] - xRaw[0]
@@ -41,6 +47,10 @@ def readPickleChannel(file, channel_no, correct_offset=True):
             y[i,:] = ent[:length]  - np.mean(ent[0:20])
         else:
             y[i,:] = ent[length]
+    #plt.figure(100*channel_no)
+    #plt.plot(x,np.mean(y,0))
+    #plt.title("x vs y for channel: "+str(channel_no))
+    #plt.show()
     return x,y
 
 def positive_check(y):
